@@ -21,9 +21,13 @@ function loadTasks() {
             table.innerHTML = '';
             data.forEach(task => {
                 const row = document.createElement('tr');
+                
+                // Apply 'line-through' style if task is deleted
+                const textDecoration = task[3] ? 'line-through' : 'none';
+                
                 row.innerHTML = `
-                    <td>${task[1]}</td>
-                    <td>${task[2]}</td>
+                    <td style="text-decoration: ${textDecoration}">${task[1]}</td>
+                    <td style="text-decoration: ${textDecoration}">${task[2]}</td>
                     <td>${task[3] ? '<s>Deleted</s>' : 'Active'}</td>
                 `;
                 row.addEventListener('dblclick', () => {
@@ -36,6 +40,10 @@ function loadTasks() {
 }
 
 document.getElementById('delete').addEventListener('click', () => {
+    const confirmation = confirm('Are you sure you want to delete this task?');
+    if (!confirmation) {
+        return; // Stop the action if "Cancel" is clicked
+    }
     const title = document.getElementById('title').value;
 
     if (!title) {
@@ -53,6 +61,65 @@ document.getElementById('delete').addEventListener('click', () => {
                 fetch(`/delete/${taskId}`, { method: 'POST' })
                     .then(() => {
                         loadTasks(); // Reload the table after marking as deleted
+                        document.getElementById('title').value = '';
+                        document.getElementById('description').value = '';
+                    });
+            } else {
+                alert('Task not found.');
+            }
+        });
+});
+
+document.getElementById('forcedelete').addEventListener('click', () => {
+    const title = document.getElementById('title').value;
+
+    const confirmation = confirm('Are you sure you want to permenantly delete this task?');
+    if (!confirmation) {
+        return; // Stop the action if "Cancel" is clicked
+    }
+
+    if (!title) {
+        alert('Please select a task to delete.');
+        return;
+    }
+
+    fetch('/tasks')
+        .then(response => response.json())
+        .then(tasks => {
+            const taskToDelete = tasks.find(task => task[1] === title);
+
+            if (taskToDelete) {
+                const taskId = taskToDelete[0]; // Get the ID of the task
+                fetch(`/forcedelete/${taskId}`, { method: 'POST' })
+                    .then(() => {
+                        loadTasks(); // Reload the table after deleting
+                        document.getElementById('title').value = '';
+                        document.getElementById('description').value = '';
+                    });
+            } else {
+                alert('Task not found.');
+            }
+        });
+});
+
+document.getElementById('reactivate').addEventListener('click', () => {
+    const title = document.getElementById('title').value;
+
+    const confirmation = confirm('Are you sure you want to reactivate this task?');
+    if (!confirmation) {
+        return; // Stop the action if "Cancel" is clicked
+    }
+
+    fetch('/tasks')
+        .then(response => response.json())
+        .then(tasks => {
+            const taskToDelete = tasks.find(task => task[1] === title);
+
+            if (taskToDelete) {
+                const taskId = taskToDelete[0]; // Get the ID of the task
+                fetch(`/reactivate/${taskId}`, { method: 'POST' })
+                    .then(() => {
+                        loadTasks(); // Reload the table after deleting
                         document.getElementById('title').value = '';
                         document.getElementById('description').value = '';
                     });

@@ -41,5 +41,23 @@ def delete(task_id):
     conn.close()
     return jsonify({'message': 'Task marked as deleted!'})
 
+@app.route('/forcedelete/<int:task_id>', methods=['POST'])
+def forcedelete(task_id):
+    conn = sqlite3.connect('todo.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM todos WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Task deleted permanently!'})
+
+@app.route('/reactivate/<int:task_id>', methods=['POST'])
+def reactivate(task_id):
+    conn = sqlite3.connect('todo.db')
+    c = conn.cursor()
+    c.execute("UPDATE todos SET deleted = 0 WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Task reactivated!'})
+
 if __name__ == '__main__':
     app.run(debug=True)
